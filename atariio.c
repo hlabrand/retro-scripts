@@ -23,7 +23,7 @@
 #include <osbind.h>
 #include <mintbind.h>
 
-#include <ncurses/termcap.h>
+#include "termcap.h"
 
 /* atariio.c */
 
@@ -81,24 +81,25 @@ static char *CE, *CL, *CM, *CS, *DL, *MD, *ME, *MR, *SE, *SO, *TE, *TI, *UE, *US
 
 #define BELL 7
 static int Agetchar( void );
-static int outc(  );
+static void outc(  );
 static void display_string(  );
 static int wait_for_char(  );
 static int read_key(  );
 static void set_cbreak_mode(  );
 static void rundown(  );
 
-/*extern int tgetent(  );
+/* extern int tgetent(  );
 extern int tgetnum(  );
 extern char *tgetstr(  );
 extern char *tgoto(  );
-extern void tputs(  );*/ // already declared in termcap
+extern void tputs(  );  // already defined in termcap.h */
+
 
 static int colours = 0;
-static int outc( c )
+static void outc( c )
    int c;
 {
-   putchar( c ); return 0;
+   putchar( c );
 }                               /* outc */
 
 void set_colours( int foreground, int background )
@@ -242,8 +243,13 @@ void initialize_screen(  )
          KR = "\033D";
       }
       if ( screen_cols == 0 && ( screen_cols = tgetnum( "co" ) ) == -1 )
+      {
          screen_cols = DEFAULT_COLS;
-
+         if ( !Getrez(  ) )         // Dancer says in his changelog for 2.01fb3:
+                                    // "If in Low Rez, the interpreter now realizes that your screen is much smaller. Your Termcap entry, however will take precedence."
+           screen_cols /= 2;        // I hope that's what he meant --HL
+      }
+      
       if ( screen_rows == 0 && ( screen_rows = tgetnum( "li" ) ) == -1 )
          screen_rows = DEFAULT_ROWS;
 
