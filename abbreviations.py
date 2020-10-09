@@ -35,30 +35,54 @@ for n in range(3,MAX_LEN+1):
             else:
                 dic[s] = 1
                     
-## use the same formula as inform :
+## If you want to use the same formula as inform :
 ##     2*((abbrev_freqs[i]-1)*abbrev_quality[i])/3 with abbrev_quality = len -2
+## A better one is actually counting the units.
 l = []
 for p in dic.items():
-    score = int(2*((p[1]-1)*(len(p[0])-2))/3)
+    i = 0
+    units = 0
+    wd = p[0]
+    while (i < len(wd)):
+        letter = wd[i]
+        if (ord(letter) == 32):
+            units += 1 ## space = char 0
+        elif (ord(letter) >= 97 and ord(letter) <= 122):
+            units += 1 ## A0 alphabet
+        elif (ord(letter) >= 65 and ord(letter) <= 90):
+            units += 2 ## A1 alphabet
+        elif (letter in "^0123456789.,!?_#'\"/\-:()"):
+            units += 2 ## A2 alphabet
+        else:
+            if (letter == '@'):
+                ## most likely an accented character like @:e : skip the next 2 letters
+                i+=2
+            units += 4 
+        i += 1
+    ## number of occurences (-1 since you have to write the abbr somewhere) * units saved (units/2) = total units saved
+    ## 3 units fit in 2 bytes
+    score = int ((p[1]-1)* (units-2)/3 * 2)
     ## Only add things that save enough bytes (to speed up the search)
     if (score > MIN_SCORE):
-        l += [[p[0], score ]]
+        l += [[p[0], score, units ]]
 
 # find the first abbreviation
 
 abbr = []
 print("Determining abbreviation "+str(len(abbr)+1)+"...")
 l = sorted(l, key=lambda x: x[1])
+
+
 steps = 0
-while (len(abbr) < 64 or len(l) > 0):
+while (len(abbr) < 64 and len(l) > 0):
     steps += 1
     # potential winner
     winner = l[len(l)-1]
     print("Trying "+str(winner[0])+"...")
     # let's confirm the score
     actual_freq = wholetext.count(winner[0])
-    actual_score = int(2*((actual_freq-1)*(len(winner[0])-2))/3)
-    print ("Let's compare to the score of "+str(l[len(l)-2][0])+", which is", str(l[len(l)-2][1]))
+    actual_score = int(2*(actual_freq-1)*(winner[2]-2)/3)
+    print ("Let's compare to the score of "+str(l[len(l)-2][0])+", which is", str(l[len(l)-2][1]) )
     if (actual_score >= l[len(l)-2][1]):
         print("Found string : '"+str(winner[0])+"' (saves "+str(actual_score)+" bytes)")
         # the revised score is still better than the next in line's
