@@ -16,6 +16,11 @@ myfile = basename+".z3"
 # determine the number of 256-byte sectors
 import os
 myfilesize = os.stat(myfile).st_size
+# the interpreter cannot deal with files that have over 510 sectors of game data
+#    (because of the 'every 256th byte' sectors also have to have their 256th byte empty)
+if (myfilesize > 510*256):
+    print("Error: file size is too large for this interpreter")
+    exit
 #print(myfilesize)
 
 # file 1 has a 128 byte header and 90 sectors:
