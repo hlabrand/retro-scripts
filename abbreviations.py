@@ -4,10 +4,14 @@
 # so you want to count frequencies for all the file except the "last few lines"
 # tweak this constant to get better estimates
 FIRST_FEW_LINES = 70  # always skip the first 70 lines : 6 lines of header and 64 of your own abbreviations
-LAST_FEW_LINES = 100
+LAST_FEW_LINES = 155
 
 # disregard abbreviations that don't save enough bytes
 MIN_SCORE = 20
+
+# How many do you want?
+#NUMBER_ABBR = 64
+NUMBER_ABBR = 96   # if you want extra small file, use "string 14 XXXX" (page 40 of the DM4)
 
 
 f = open("gametext.txt", "r")
@@ -74,7 +78,7 @@ l = sorted(l, key=lambda x: x[1])
 
 
 steps = 0
-while (len(abbr) < 64 and len(l) > 0):
+while (len(abbr) < NUMBER_ABBR and len(l) > 0):
     steps += 1
     # potential winner
     winner = l[len(l)-1]
@@ -108,12 +112,19 @@ while (len(abbr) < 64 and len(l) > 0):
     
     
             
-print("Found 64 abbreviations in"+str(steps)+"steps")
+print("Found "+str(NUMBER_ABBR)+" abbreviations in"+str(steps)+"steps")
 
 s = "Abbreviate "
 for i in range(0,64):
     s = s + '"' + abbr[i] +'" '
 s += ";"
+print(s)
+
+if (NUMBER_ABBR > 64):
+    s = "Extra abbreviations : [";
+    for i in range(64, NUMBER_ABBR):
+        s = s + '"' + abbr[i] +'", '
+s += "]"
 print(s)
 
 f.close()
