@@ -1,3 +1,15 @@
+#   abbreviations.py
+#      by Hugo Labrande
+#      Licence: public domain
+
+# This script finds great abbreviations for your Inform game, which helps when space is tight.
+#   + It finds up to 10-15% more savings than Inform's "-u" switch
+#       This is about 3k on a 128k story file
+#   - It is way slower (up to 100x slower, or 2h on a full-size game)
+
+# Note: most of the time is spent looking at every subchain of length 3, 4, ..., 8, 9 of the game text.
+#   This means that if something with 9 letters is abbreviated, it might be worth it to try to extend that string and get more savings.
+
 # note: there is a bug because it doesn't always correspond to what the inform compiler says, thus yielding abbreviations that aren't the best; find out why (because inform abbreviates in a different order than what you give it?)
 
 # gametext.txt ends with a printout of the dictionary, but the dictionary is not abbreviated
