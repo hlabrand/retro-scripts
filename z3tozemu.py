@@ -74,7 +74,7 @@ for i in range(1, nb_pages+1):
     data_header_part1 += bytearray([0x15])
     
     # Name of this variable
-    page_name = prefix+"R"+chr(ord('a')+(i // 26))+chr(ord('a')-1+(i % 26))
+    page_name = prefix+"R"+chr(ord('a')+((i-1) // 26))+chr(ord('a')+((i-1) % 26))
     page_name_bytes = bytearray([ord(page_name.upper()[i]) for i in range(0,len(page_name))])
     #print(page_name)
     data_header_part2 = page_name_bytes
