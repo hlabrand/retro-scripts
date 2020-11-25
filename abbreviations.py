@@ -9,6 +9,9 @@
 
 # Note: most of the time is spent looking at every subchain of length 3, 4, ..., 8, 9 of the game text.
 #   This means that if something with 9 letters is abbreviated, it might be worth it to try to extend that string and get more savings.
+# Abbreviation strings still aren't an exact science!
+#   Due to the fact that the number of 5-bit units has to be a multiple of 3 (and as such gets padded), we can only give estimates
+#   I found that replacing 3-letter abbreviations at the end of the list by longer words from the "extra" list yielded some modest savings
 
 # note: there is a bug because it doesn't always correspond to what the inform compiler says, thus yielding abbreviations that aren't the best; find out why (because inform abbreviates in a different order than what you give it?)
 
@@ -16,7 +19,7 @@
 # so you want to count frequencies for all the file except the "last few lines"
 # tweak this constant to get better estimates
 FIRST_FEW_LINES = 70  # always skip the first 70 lines : 6 lines of header and 64 of your own abbreviations
-LAST_FEW_LINES = 155
+LAST_FEW_LINES = 158
 
 # disregard abbreviations that don't save enough bytes
 MIN_SCORE = 20
@@ -136,6 +139,7 @@ if (NUMBER_ABBR > 64):
     s = "Extra abbreviations : [";
     for i in range(64, NUMBER_ABBR):
         s = s + '"' + abbr[i] +'", '
+s = s[0:len(s)-2] # remove trailing comma
 s += "]"
 print(s)
 
