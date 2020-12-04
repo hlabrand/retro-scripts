@@ -1,25 +1,20 @@
 #   abbreviations.py
 #      by Hugo Labrande
 #      Licence: public domain
+#   Version: 04-Dec-2020
 
 # This script finds great abbreviations for your Inform game, which helps when space is tight.
-#   + It finds up to 10-15% more savings than Inform's "-u" switch
-#       This is about 3k on a 128k story file
-#   - It is way slower (up to 100x slower, or 2h on a full-size game)
+# It finds up to 20% more savings than Inform's "-u" switch ; this is about 4k on a 128k story file.
+# As a bonus, it's just as fast as that switch when you look at abbreviations of length between 2 and 9.
 
-# Note: most of the time is spent looking at every subchain of length 3, 4, ..., 8, 9 of the game text.
-#   This means that if something with 9 letters is abbreviated, it might be worth it to try to extend that string and get more savings.
 # Abbreviation strings still aren't an exact science!
 #   Due to the fact that the number of 5-bit units has to be a multiple of 3 (and as such gets padded), we can only give estimates
-#   I found that replacing 3-letter abbreviations at the end of the list by longer words from the "extra" list yielded some modest savings
 
-# note: there is a bug because it doesn't always correspond to what the inform compiler says, thus yielding abbreviations that aren't the best; find out why (because inform abbreviates in a different order than what you give it?)
-
-# gametext.txt ends with a printout of the dictionary, but the dictionary is not abbreviated
+# gametext.txt ends with a printout of the dictionary, but the dictionary is never abbreviated
 # so you want to count frequencies for all the file except the "last few lines"
 # tweak this constant to get better estimates
 FIRST_FEW_LINES = 70  # always skip the first 70 lines : 6 lines of header and 64 of your own abbreviations
-LAST_FEW_LINES = 158
+LAST_FEW_LINES = 159
 
 # disregard abbreviations that don't save enough bytes
 MIN_SCORE = 20
@@ -38,12 +33,15 @@ wholetext = ""
 for i in range(0,len(lines)):
     wholetext += lines[i] + "\n"
 
-dic = {}
+# One-char strings can be 4 unit longs (for instance ";"), so you could save 2 units per occurence; however at the date of writing, Inform refuses to abbreviate strings of length 0 or 1...
+# So starting at 2 is a good idea for now
+MIN_LEN = 2
+MAX_LEN = 13
 
-# From experience, I've never found abbreviations of 10 letters that helped
-MAX_LEN = 9
+l = []
 
-for n in range(3,MAX_LEN+1):
+for n in range(MIN_LEN,MAX_LEN+1):
+    dic = {}
     # each step takes around 1 second on my computer
     print("   Counting frequencies... ("+str(n)+"/"+str(MAX_LEN)+")")
     for li in lines:
@@ -54,36 +52,36 @@ for n in range(3,MAX_LEN+1):
             else:
                 dic[s] = 1
                     
-## If you want to use the same formula as inform :
-##     2*((abbrev_freqs[i]-1)*abbrev_quality[i])/3 with abbrev_quality = len -2
-## A better one is actually counting the units.
-l = []
-for p in dic.items():
-    i = 0
-    units = 0
-    wd = p[0]
-    while (i < len(wd)):
-        letter = wd[i]
-        if (ord(letter) == 32):
-            units += 1 ## space = char 0
-        elif (ord(letter) >= 97 and ord(letter) <= 122):
-            units += 1 ## A0 alphabet
-        elif (ord(letter) >= 65 and ord(letter) <= 90):
-            units += 2 ## A1 alphabet
-        elif (letter in "^0123456789.,!?_#'\"/\-:()"):
-            units += 2 ## A2 alphabet
-        else:
-            if (letter == '@'):
-                ## most likely an accented character like @:e : skip the next 2 letters
-                i+=2
-            units += 4 
-        i += 1
-    ## number of occurences (-1 since you have to write the abbr somewhere) * units saved (units/2) = total units saved
-    ## 3 units fit in 2 bytes
-    score = int ((p[1]-1)* (units-2)/3 * 2)
-    ## Only add things that save enough bytes (to speed up the search)
-    if (score > MIN_SCORE):
-        l += [[p[0], score, units ]]
+    ## If you want to use the same formula as inform :
+    ##     2*((abbrev_freqs[i]-1)*abbrev_quality[i])/3 with abbrev_quality = len -2
+    ## A better one is actually counting the units.
+
+    for p in dic.items():
+        i = 0
+        units = 0
+        wd = p[0]
+        while (i < len(wd)):
+            letter = wd[i]
+            if (ord(letter) == 32):
+                units += 1 ## space = char 0
+            elif (ord(letter) >= 97 and ord(letter) <= 122):
+                units += 1 ## A0 alphabet
+            elif (ord(letter) >= 65 and ord(letter) <= 90):
+                units += 2 ## A1 alphabet
+            elif (letter in "^0123456789.,!?_#'~/\-:()"):
+                units += 2 ## A2 alphabet
+            else:
+                if (letter == '@'):
+                    ## most likely an accented character like @:e : skip the next 2 letters
+                    i+=2
+                units += 4 
+            i += 1
+        ## number of occurences (-1 since you have to write the abbr somewhere) * units saved (units/2) = total units saved
+        ## 3 units fit in 2 bytes
+        score = int ((p[1]-1)* (units-2)/3 * 2)
+        ## Only add things that save enough bytes (to speed up the search)
+        if (score > MIN_SCORE):
+            l += [[p[0], score, units ]]
 
 # find the first abbreviation
 
