@@ -1,7 +1,7 @@
 #   abbreviations.py
 #      by Hugo Labrande
 #      Licence: public domain
-#   Version: 04-Dec-2020
+#   Version: 09-Dec-2020
 
 # This script finds great abbreviations for your Inform game, which helps when space is tight.
 # It finds up to 20% more savings than Inform's "-u" switch ; this is about 4k on a 128k story file.
@@ -10,18 +10,50 @@
 # Abbreviation strings still aren't an exact science!
 #   Due to the fact that the number of 5-bit units has to be a multiple of 3 (and as such gets padded), we can only give estimates
 
-# gametext.txt ends with a printout of the dictionary, but the dictionary is never abbreviated
+
+# Input: gametext.txt file containing all the text in your game
+#    (for instance use the -f flag of the Inform 6 compiler, or a command like
+#                cat *.zap | grep -o '".*"' | sed 's/"\(.*\)"/\1/g' >gametext.txt
+#     for ZILF/ZILCH - don't forget to exclude the dictionary words though.)
+
+# Output: the first 64 abbreviations, in Inform's format; the extra abbreviations, in a Python-style list (to use with my extra-abbrev.py)
+#         If you specify the -z flag, a file "mygame_freq.zap" will be created in the correct format, ready to use with ZILF/ZILCH.
+
+
+# In I6, gametext.txt ends with a printout of the dictionary, but the dictionary is never abbreviated
 # so you want to count frequencies for all the file except the "last few lines"
 # tweak this constant to get better estimates
-FIRST_FEW_LINES = 70  # always skip the first 70 lines : 6 lines of header and 64 of your own abbreviations
-LAST_FEW_LINES = 159
+FIRST_FEW_LINES = 0  # With I6, always skip the first 70 lines : 6 lines of header and 64 of your own abbreviations
+LAST_FEW_LINES = 705
 
 # disregard abbreviations that don't save enough bytes
-MIN_SCORE = 20
+MIN_SCORE = 10
 
 # How many do you want?
 #NUMBER_ABBR = 64
-NUMBER_ABBR = 96   # if you want extra small file, use "string 14 XXXX" (page 40 of the DM4)
+NUMBER_ABBR = 96   # if you want an extra small file, use "string 14 XXXX" (page 40 of the DM4)
+
+# One-char strings can be 4 unit longs (for instance ";"), so you could save 2 units per occurence; however at the date of writing, Inform refuses to abbreviate strings of length 0 or 1...
+# So starting at 2 is a good idea for now
+MIN_LEN = 2
+MAX_LEN = 17
+
+
+
+ZAP_OUTPUT = 0
+import sys, getopt
+
+# Deal with command-line arguments
+# TODO allow the specification of the name of the file, the lines, etc - I'm being lazy for now
+argv = sys.argv[1:]
+try:
+    opts, args = getopt.getopt(argv,"z",)
+except getopt.GetoptError:
+    print ('Usage: python3 abbreviations.py [-z]')
+    sys.exit(2)
+for opt, arg in opts:
+    if opt == '-z':
+        ZAP_OUTPUT = 1
 
 
 f = open("gametext.txt", "r")
@@ -33,10 +65,6 @@ wholetext = ""
 for i in range(0,len(lines)):
     wholetext += lines[i] + "\n"
 
-# One-char strings can be 4 unit longs (for instance ";"), so you could save 2 units per occurence; however at the date of writing, Inform refuses to abbreviate strings of length 0 or 1...
-# So starting at 2 is a good idea for now
-MIN_LEN = 2
-MAX_LEN = 13
 
 l = []
 
@@ -89,6 +117,10 @@ abbr = []
 print("Determining abbreviation "+str(len(abbr)+1)+"...")
 l = sorted(l, key=lambda x: x[1])
 
+if ZAP_OUTPUT == 1:
+    g = open("mygame_freq.zap", "w")
+
+final_savings = 0
 
 steps = 0
 while (len(abbr) < NUMBER_ABBR and len(l) > 0):
@@ -102,6 +134,9 @@ while (len(abbr) < NUMBER_ABBR and len(l) > 0):
     print ("Let's compare to the score of "+str(l[len(l)-2][0])+", which is", str(l[len(l)-2][1]) )
     if (actual_score >= l[len(l)-2][1]):
         print("Found string : '"+str(winner[0])+"' (saves "+str(actual_score)+" bytes)")
+        final_savings += (actual_freq-1)*(winner[2]-2)
+        if ZAP_OUTPUT == 1:
+            g.write("        .FSTR FSTR?"+str(len(abbr)+1)+",\""+str(winner[0])+"\"        ; "+str(actual_freq)+"x, saved "+str((actual_freq-1)*(winner[2]-2))+"\n")
         # the revised score is still better than the next in line's
         abbr = abbr + [str(winner[0])]
         print("Determining abbreviation "+str(len(abbr)+1)+"...")
@@ -122,10 +157,13 @@ while (len(abbr) < NUMBER_ABBR and len(l) > 0):
         #print("Sorting again...")
         l = sorted(l, key=lambda x: x[1])
         
-    
-    
+        
+if ZAP_OUTPUT == 1:
+    endoffile="WORDS::\n        FSTR?1\n        FSTR?2\n        FSTR?3\n        FSTR?4\n        FSTR?5\n        FSTR?6\n        FSTR?7\n        FSTR?8\n        FSTR?9\n        FSTR?10\n        FSTR?11\n        FSTR?12\n        FSTR?13\n        FSTR?14\n        FSTR?15\n        FSTR?16\n        FSTR?17\n        FSTR?18\n        FSTR?19\n        FSTR?20\n        FSTR?21\n        FSTR?22\n        FSTR?23\n        FSTR?24\n        FSTR?25\n        FSTR?26\n        FSTR?27\n        FSTR?28\n        FSTR?29\n        FSTR?30\n        FSTR?31\n        FSTR?32\n        FSTR?33\n        FSTR?34\n        FSTR?35\n        FSTR?36\n        FSTR?37\n        FSTR?38\n        FSTR?39\n        FSTR?40\n        FSTR?41\n        FSTR?42\n        FSTR?43\n        FSTR?44\n        FSTR?45\n        FSTR?46\n        FSTR?47\n        FSTR?48\n        FSTR?49\n        FSTR?50\n        FSTR?51\n        FSTR?52\n        FSTR?53\n        FSTR?54\n        FSTR?55\n        FSTR?56\n        FSTR?57\n        FSTR?58\n        FSTR?59\n        FSTR?60\n        FSTR?61\n        FSTR?62\n        FSTR?63\n        FSTR?64\n        FSTR?65\n        FSTR?66\n        FSTR?67\n        FSTR?68\n        FSTR?69\n        FSTR?70\n        FSTR?71\n        FSTR?72\n        FSTR?73\n        FSTR?74\n        FSTR?75\n        FSTR?76\n        FSTR?77\n        FSTR?78\n        FSTR?79\n        FSTR?80\n        FSTR?81\n        FSTR?82\n        FSTR?83\n        FSTR?84\n        FSTR?85\n        FSTR?86\n        FSTR?87\n        FSTR?88\n        FSTR?89\n        FSTR?90\n        FSTR?91\n        FSTR?92\n        FSTR?93\n        FSTR?94\n        FSTR?95\n        FSTR?96\n\n        .ENDI"
+    g.write(endoffile)
+    g.close()
             
-print("Found "+str(NUMBER_ABBR)+" abbreviations in"+str(steps)+"steps")
+print("Found "+str(NUMBER_ABBR)+" abbreviations in"+str(steps)+"steps; they saved "+str(final_savings)+" units (~"+str(2*int(final_savings/3))+" bytes)")
 
 s = "Abbreviate "
 for i in range(0,64):
