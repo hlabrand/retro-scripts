@@ -1,17 +1,31 @@
 # This script uses the 32 extra abbreviations that are set up as "@-strings" (page 40 of DM4) in I6 (@00 to @32)
 
 # use the extra abbreviations spat by abbreviations.py
-extra_abbrev = ["not", "est", "few ", "ind", "en ", "north", "wood", ", a", "generator", "cliff", ". A", "fence", "under", "round", "is ", " co", "ent", "ear", " anyth", "ever", " do", "...", "elevator", " st", "ake", " wh", "wards", "s. ", "ast", "way", "ock", "ill"]
+extra_abbrev = ["not", "est", "ind", "few ", " from", "en ", "north", "wood", "generator", "is ", "fence", "under", "round", "cliff", "ent", "ear", "elevator", " any", "ever", " do", " co", "wards", "ake", ".^", " st", "Tristam Isl", "ock", "ast", "ill", " what", "way", "manage"]
 
 if (len(extra_abbrev) >32):
     print("Error: too many extra abbreviations")
     exit
+    
+    
+import optparse
+popt = optparse.OptionParser(usage='extra-abbrev.py FILENAME')
+(opts, args) = popt.parse_args()
+if (not args):
+    popt.print_help()
+    exit(-1)
+filename = None
+if (args):
+    filename = args.pop(0)
+
+radical = filename.split(".")[0]
+print(radical)
 
 # Open the game source
-f = open("tristam.inf", "r")
+f = open(radical+".inf", "r")
 lines = f.readlines()
 # Open somewhere to copy
-g = open("tristam-crunch.inf", "w")
+g = open(radical+"-crunch.inf", "w")
 
 flag = 0
 for i in range(0,len(lines)):
