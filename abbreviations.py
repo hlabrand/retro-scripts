@@ -15,26 +15,50 @@
 
 
 # Input: gametext.txt file containing all the text in your game
-#    (for instance use the -f flag of the Inform 6 compiler, or a command like
+#    If the flag -f is specified, the input should be the one of Inform 6.35's -f flag with $TRANSCRIPT_FORMAT=1
+#    If no flag is specified, it should just be a game text, for instance Inform with -f (default format, $TRANSCRIPT_FORMAT=0), or
 #                cat *.zap | grep -o '".*"' | sed 's/"\(.*\)"/\1/g' >gametext.txt
-#     for ZILF/ZILCH - don't forget to exclude the dictionary words though.)
+#         (don't forget to exclude the dictionary words though)
+#         You then have to tweak how many lines at the beginning and the end you want to skip        
 
-# Output: the first 64 abbreviations, in Inform's format; the extra abbreviations, in a Python-style list (to use with my extra-abbrev.py)
+# Output: If no flag is specified, the abbreviations in Inform's format (use Inform 6.35 with MAX_ABBREVS = 96 and MAX_DYNAMIC_STRINGS = 0)
 #         If you specify the -z flag, a file "mygame_freq.zap" will be created in the correct format, ready to use with ZILF/ZILCH.
 
 
-# In I6, gametext.txt ends with a printout of the dictionary, but the dictionary is never abbreviated
-# so you want to count frequencies for all the file except the "last few lines"
-# tweak this constant to get better estimates
-FIRST_FEW_LINES = 70  # With I6, always skip the first 70 lines : 6 lines of header and 64 of your own abbreviations
-LAST_FEW_LINES = 259
+ZAP_OUTPUT = 0
+NEW_GAMETEXT_FORMAT = 0
+import sys, getopt
+
+# Deal with command-line arguments
+# TODO allow the specification of the name of the file, the lines, etc - I'm being lazy for now
+argv = sys.argv[1:]
+try:
+    opts, args = getopt.getopt(argv,"zf")
+except getopt.GetoptError:
+    print ('Usage: python3 abbreviations.py [-z] [-f]')
+    sys.exit(2)
+for opt, arg in opts:
+    if opt == '-z':
+        ZAP_OUTPUT = 1
+    if opt == '-f':
+        NEW_GAMETEXT_FORMAT = 1
+        
+
+
+FIRST_FEW_LINES = 0
+LAST_FEW_LINES = 0
+if (NEW_GAMETEXT_FORMAT == 0):
+    # With I6, skip "6+n" lines, where n is the number of abbreviations you declare
+    FIRST_FEW_LINES = 70  
+    LAST_FEW_LINES = 259
+
+
 
 # disregard abbreviations that don't save enough units
 MIN_SCORE = 15
 
 # How many do you want?
-#NUMBER_ABBR = 64
-NUMBER_ABBR = 96   # if you want an extra small file, use "string 14 XXXX" (page 40 of the DM4)
+NUMBER_ABBR = 96   # anything bigger than 64 but smaller than 96 is possible with Inform 6.35, using "MAX_ABBREVS=96; MAX_DYNAMIC_STRINGS=0;"
 
 # One-char strings can be 4 unit longs (for instance ";"), so you could save 2 units per occurence; however at the date of writing, Inform refuses to abbreviate strings of length 0 or 1...
 # So starting at 2 is a good idea for now
@@ -56,26 +80,22 @@ def zchar_weight(c):
         return 4
 
 
-
-ZAP_OUTPUT = 0
-import sys, getopt
-
-# Deal with command-line arguments
-# TODO allow the specification of the name of the file, the lines, etc - I'm being lazy for now
-argv = sys.argv[1:]
-try:
-    opts, args = getopt.getopt(argv,"z",)
-except getopt.GetoptError:
-    print ('Usage: python3 abbreviations.py [-z]')
-    sys.exit(2)
-for opt, arg in opts:
-    if opt == '-z':
-        ZAP_OUTPUT = 1
-
+## Processing starts here
 
 f = open("gametext.txt", "r")
 lines = f.readlines()
-lines = lines[FIRST_FEW_LINES:len(lines)-LAST_FEW_LINES]
+# filter out some stuff
+if (NEW_GAMETEXT_FORMAT == 1):
+    lines2 = []
+    for i in range(0, len(lines)):
+        cha = lines[i][0]
+        # take only if not a comment, an abbreviation, a dictionary word, an attribute name, or a trace message
+        if (cha not in "IADSX"):
+            # remove the first three characters, the "tag"
+            lines2 = lines2 + [lines[i][3:len(lines[i])]]
+    lines = lines2
+else:
+    lines = lines[FIRST_FEW_LINES:len(lines)-LAST_FEW_LINES]
 
 # keep an updated version of the abbreviated text
 wholetext = ""
@@ -238,17 +258,9 @@ final_savings = wholetext_weight - old_textsize
 print("Found "+str(NUMBER_ABBR)+" abbreviations in "+str(steps)+" steps; they saved "+str(final_savings)+" units (~"+str(2*int(final_savings/3))+" bytes)")
 
 s = "Abbreviate "
-for i in range(0,64):
+for i in range(0,NUMBER_ABBR):
     s = s + '"' + abbr[i] +'" '
 s += ";"
-print(s)
-
-if (NUMBER_ABBR > 64):
-    s = "Extra abbreviations : [";
-    for i in range(64, NUMBER_ABBR):
-        s = s + '"' + abbr[i] +'", '
-s = s[0:len(s)-2] # remove trailing comma
-s += "]"
 print(s)
 
 f.close()
