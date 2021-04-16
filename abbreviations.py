@@ -1,6 +1,6 @@
 #   abbreviations.py
 #      by Hugo Labrande
-#   Version: 24-Mar-2021
+#   Version: 15-Apr-2021
 
 # This script finds very good abbreviations for your Inform game, which helps when space is tight.
 # It finds up to 20% more savings than Inform's "-u" switch ; this is about 4k on a 128k story file.
@@ -15,8 +15,8 @@
 
 
 # Input: gametext.txt file containing all the text in your game
-#    If the flag -f is specified, the input should be the one of Inform 6.35's -f flag with $TRANSCRIPT_FORMAT=1
-#    If no flag is specified, it should just be a game text, for instance Inform with -f (default format, $TRANSCRIPT_FORMAT=0), or
+#    If the flag -f is specified, the input should be the one of Inform 6.35's -r flag with $TRANSCRIPT_FORMAT=1
+#    If no flag is specified, it should just be a game text, for instance Inform with -r (default format, $TRANSCRIPT_FORMAT=0), or
 #                cat *.zap | grep -o '".*"' | sed 's/"\(.*\)"/\1/g' >gametext.txt
 #         (don't forget to exclude the dictionary words though)
 #         You then have to tweak how many lines at the beginning and the end you want to skip        
