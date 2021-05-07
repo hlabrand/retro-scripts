@@ -58,12 +58,12 @@ if (NEW_GAMETEXT_FORMAT == 0):
 MIN_SCORE = 15
 
 # How many do you want?
-NUMBER_ABBR = 96   # anything bigger than 64 but smaller than 96 is possible with Inform 6.35, using "MAX_ABBREVS=96; MAX_DYNAMIC_STRINGS=0;"
+NUMBER_ABBR = 2   # anything bigger than 64 but smaller than 96 is possible with Inform 6.35, using "MAX_ABBREVS=96; MAX_DYNAMIC_STRINGS=0;"
 
 # One-char strings can be 4 unit longs (for instance ";"), so you could save 2 units per occurence; however at the date of writing, Inform refuses to abbreviate strings of length 0 or 1...
 # So starting at 2 is a good idea for now
 MIN_LEN = 2
-MAX_LEN = 60
+MAX_LEN = 6
 
 
 # Helper function (weight of a zchar)
@@ -82,7 +82,7 @@ def zchar_weight(c):
 
 ## Processing starts here
 
-f = open("gametext.txt", "r")
+f = open("gametext.txt", "r", encoding='ISO-8859-1')
 lines = f.readlines()
 # filter out some stuff
 if (NEW_GAMETEXT_FORMAT == 1):
@@ -245,7 +245,7 @@ while (len(abbr) < NUMBER_ABBR and len(l) > 0):
             if (str(winner[0]) not in str(l[i][0])):
                 lcopy += [l[i]]
         l = lcopy
-        print ("Array updated; now has"+str(len(l))+" entries")
+        print ("Array updated; now has "+str(len(l))+" entries")
         # no need to sort; the order of the score hasn't changed
         
         
@@ -261,6 +261,6 @@ s = "Abbreviate "
 for i in range(0,NUMBER_ABBR):
     s = s + '"' + abbr[i] +'" '
 s += ";"
-print(s)
+print(s.encode('ISO-8859-1').decode('UTF-8'))
 
 f.close()
