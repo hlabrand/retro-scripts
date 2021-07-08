@@ -27,6 +27,13 @@
 
 # Please tweak these constants by hand; I should at some point get around to making these command-line arguments...
 #
+# File name
+GAMETEXT_FILE_NAME = "gametext.txt"
+# Verbosity level:
+#    0 = nothing is printed except the abbreviations;
+#    1 = the script updates you on its progress;
+#    2 = the script tells you in excruciating detail what steps it's doing (how many candidates, what the score is, if they change after re-evaluating, etc)
+VERBOSITY_LEVEL = 2
 # This is used to discard abbreviations that (due to length and frequency) won't save many units
 # A high value will speed up this algorithm but you might run out of candidates
 MIN_SCORE = 15
@@ -91,7 +98,7 @@ def zchar_weight(c):
         return 4
 
 
-f = open("gametext.txt", "r", encoding='ISO-8859-1')
+f = open(GAMETEXT_FILE_NAME, "r", encoding='ISO-8859-1')
 lines = f.readlines()
 # filter out some stuff
 if (NEW_GAMETEXT_FORMAT == 1):
@@ -121,7 +128,8 @@ l = []
 for n in range(MIN_LEN,MAX_LEN+1):
     dic = {}
     # each step takes around 1 second on my computer
-    print("   Counting frequencies... ("+str(n)+"/"+str(MAX_LEN)+")")
+    if (VERBOSITY_LEVEL > 0):
+        print("   Counting frequencies... ("+str(n)+"/"+str(MAX_LEN)+")")
     for li in lines:
         for i in range(0, len(li)-n):
             s = li[i:i+n]
@@ -168,7 +176,8 @@ for n in range(MIN_LEN,MAX_LEN+1):
 # find the first abbreviation
 
 abbr = []
-print("Determining abbreviation "+str(len(abbr)+1)+"...")
+if (VERBOSITY_LEVEL > 0):
+    print("Determining abbreviation "+str(len(abbr)+1)+"...")
 l = sorted(l, key=lambda x: x[1])
 
 if ZAP_OUTPUT == 1:
@@ -215,7 +224,8 @@ while (len(abbr) < NUMBER_ABBR and len(l) > 0):
     n=1
     while( l[len(l)-1-n][1] == leading_score ):
         n += 1
-    print("Found "+str(n)+" leaders with score "+str(leading_score))
+    if (VERBOSITY_LEVEL == 2):
+        print("Found "+str(n)+" leaders with score "+str(leading_score))
     # see if they all have updated score
     flag = 1
     for i in range(1, n+1):
@@ -227,7 +237,8 @@ while (len(abbr) < NUMBER_ABBR and len(l) > 0):
             flag = 0
     if ( flag == 0 ):
         l = sorted(l, key=lambda x: x[1])
-        print("The leaders weren't what we thought; let's sort again...")
+        if (VERBOSITY_LEVEL == 2):
+            print("The leaders weren't what we thought; let's sort again...")
     else:
         # at this point, we have a few candidates with equal actual score
         # Matthew Russotto's idea for a tiebreaker: take the high frequency
@@ -238,7 +249,8 @@ while (len(abbr) < NUMBER_ABBR and len(l) > 0):
                 max = i
         # we found our abbreviation
         winner = l[len(l)-max]
-        print("Found string : '"+str(winner[0])+"' (units saved: "+str(winner[1])+" units)")
+        if (VERBOSITY_LEVEL > 0):
+            print("Found string : '"+str(winner[0])+"' (units saved: "+str(winner[1])+" units)")
         # the abbreviated text size is decreased by the savings
         old_textsize = old_textsize - winner[1]
         if ZAP_OUTPUT == 1:
@@ -246,7 +258,8 @@ while (len(abbr) < NUMBER_ABBR and len(l) > 0):
             g.write("        .FSTR FSTR?"+str(len(abbr)+1)+",\""+str(winner[0])+"\"        ; "+"\n")
         # the revised score is still better than the next in line's
         abbr = abbr + [str(winner[0])]
-        print("Determining abbreviation "+str(len(abbr)+1)+"...")
+        if (VERBOSITY_LEVEL > 0):
+            print("Determining abbreviation "+str(len(abbr)+1)+"...")
         # update the array
         lcopy = []
         for i in range(0, len(l)):
@@ -254,7 +267,8 @@ while (len(abbr) < NUMBER_ABBR and len(l) > 0):
             if (str(winner[0]) not in str(l[i][0])):
                 lcopy += [l[i]]
         l = lcopy
-        print ("Array updated; now has "+str(len(l))+" entries")
+        if (VERBOSITY_LEVEL == 2):
+            print ("Array updated; now has "+str(len(l))+" entries")
         # no need to sort; the order of the score hasn't changed
         
         
@@ -264,7 +278,8 @@ if ZAP_OUTPUT == 1:
     g.close()
 
 final_savings = wholetext_weight - old_textsize
-print("Found "+str(NUMBER_ABBR)+" abbreviations in "+str(steps)+" steps; they saved "+str(final_savings)+" units (~"+str(2*int(final_savings/3))+" bytes)")
+if (VERBOSITY_LEVEL > 0):
+    print("Found "+str(NUMBER_ABBR)+" abbreviations in "+str(steps)+" steps; they saved "+str(final_savings)+" units (~"+str(2*int(final_savings/3))+" bytes)")
 
 s = "Abbreviate "
 for i in range(0,NUMBER_ABBR):
