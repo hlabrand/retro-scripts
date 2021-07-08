@@ -160,16 +160,16 @@ for n in range(MIN_LEN,MAX_LEN+1):
                 units += 2 ## A2 alphabet
             else:
                 if (letter == '@'):
-                    ## most likely an accented character like @:e : skip the next 2 letters
+                    # most likely an accented character like @:e : skip the next 2 letters
                     i+=2
                 units += 4 
             i += 1
-        ## number of occurences (-1 since you have to write the abbr somewhere) * units saved (units/2) = total units saved
-        ## we compute the number of units saved
-        ## score = int ((p[1]-1)* (units-2)/3 * 2)
+        # number of occurences (-1 since you have to write the abbr somewhere) * units saved (units/2) = total units saved
+        # we compute the number of units saved
+        # score = int ((p[1]-1)* (units-2)/3 * 2)
         score = (p[1]-1)* (units-2)
-        ## Only add things that save enough units (to speed up the search)
-        ## Add something to say when we last updated the score
+        # Only add things that save enough units (to speed up the search)
+        # Add something to say when we last updated the score
         if (score > MIN_SCORE):
             l += [[p[0], score, units, 0 ]]
 
