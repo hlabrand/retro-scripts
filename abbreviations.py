@@ -1,14 +1,14 @@
 #   abbreviations.py
 #      by Hugo Labrande
-#   Version: 15-Apr-2021
+#   Version: 8-Jul-2021
 
 # This script finds very good abbreviations for your Inform game, which helps when space is tight.
 # It finds up to 20% more savings than Inform's "-u" switch ; this is about 4k on a 128k story file.
 # As a bonus, it's just as fast as that switch when you look at abbreviations of length between 2 and 9.
+# Use the Inform 6.36 version of the compiler for even more savings!
 
 # Other programs doing this exist: https://intfiction.org/t/highly-optimized-abbreviations-computed-efficiently/48753
-# Thank you to Henrik Asman and Matthew Russotto for the discussion. Their programs (for ZIL) find even better abbreviations than this script!
-# You'll find them at https://github.com/heasm66/ZAbbrevMaker and https://gitlab.com/russotto/zilabbrs
+# Thank you to Henrik Asman and Matthew Russotto for the discussion and their programs. You'll find them at https://github.com/heasm66/ZAbbrevMaker and https://gitlab.com/russotto/zilabbrs
 
 # Abbreviation strings still aren't an exact science!
 #   Due to the fact that the number of 5-bit units has to be a multiple of 3 (and as such gets padded), we can only give estimates
@@ -19,17 +19,38 @@
 #    If no flag is specified, it should just be a game text, for instance Inform with -r (default format, $TRANSCRIPT_FORMAT=0), or
 #                cat *.zap | grep -o '".*"' | sed 's/"\(.*\)"/\1/g' >gametext.txt
 #         (don't forget to exclude the dictionary words though)
-#         You then have to tweak how many lines at the beginning and the end you want to skip        
-
+#         You then have to tweak how many lines at the beginning and the end you want to skip (see line 70ish of this program)
 # Output: If no flag is specified, the abbreviations in Inform's format (use Inform 6.35 with MAX_ABBREVS = 96 and MAX_DYNAMIC_STRINGS = 0)
 #         If you specify the -z flag, a file "mygame_freq.zap" will be created in the correct format, ready to use with ZILF/ZILCH.
 
+
+
+# Please tweak these constants by hand; I should at some point get around to making these command-line arguments...
+#
+# This is used to discard abbreviations that (due to length and frequency) won't save many units
+# A high value will speed up this algorithm but you might run out of candidates
+MIN_SCORE = 15
+#
+# This indicates how many abbreviations should be conmputed
+# Anything bigger than 64 but smaller than 96 is possible with Inform 6.35, using "MAX_ABBREVS=96; MAX_DYNAMIC_STRINGS=0;"
+NUMBER_ABBR = 2
+#
+# Set a minimum and maximum length (in number of ascii/unicode characters) for abbreviations
+# One-char strings can be 4 units long (for instance ";"), so you could in theory save 2 units per occurence; however at the date of writing, Inform refuses to abbreviate strings made of one ASCII characters.
+MIN_LEN = 2
+MAX_LEN = 6
+
+
+
+
+# Deal with command-line arguments
+#   -z = ZILF/ZILCH output
+#   -f = new gametext format (Inform 6.35 and up with flag -r and $TRANSCRIPT_FORMAT=1)
 
 ZAP_OUTPUT = 0
 NEW_GAMETEXT_FORMAT = 0
 import sys, getopt
 
-# Deal with command-line arguments
 # TODO allow the specification of the name of the file, the lines, etc - I'm being lazy for now
 argv = sys.argv[1:]
 try:
@@ -42,9 +63,8 @@ for opt, arg in opts:
         ZAP_OUTPUT = 1
     if opt == '-f':
         NEW_GAMETEXT_FORMAT = 1
-        
 
-
+# If you opted for the old gametext format, you might want to cut the first few lines (header and abbreviations) and the last few lines (dictionary words) for best results
 FIRST_FEW_LINES = 0
 LAST_FEW_LINES = 0
 if (NEW_GAMETEXT_FORMAT == 0):
@@ -54,17 +74,8 @@ if (NEW_GAMETEXT_FORMAT == 0):
 
 
 
-# disregard abbreviations that don't save enough units
-MIN_SCORE = 15
 
-# How many do you want?
-NUMBER_ABBR = 2   # anything bigger than 64 but smaller than 96 is possible with Inform 6.35, using "MAX_ABBREVS=96; MAX_DYNAMIC_STRINGS=0;"
-
-# One-char strings can be 4 unit longs (for instance ";"), so you could save 2 units per occurence; however at the date of writing, Inform refuses to abbreviate strings of length 0 or 1...
-# So starting at 2 is a good idea for now
-MIN_LEN = 2
-MAX_LEN = 6
-
+## Processing starts here
 
 # Helper function (weight of a zchar)
 def zchar_weight(c):
@@ -79,8 +90,6 @@ def zchar_weight(c):
     else:
         return 4
 
-
-## Processing starts here
 
 f = open("gametext.txt", "r", encoding='ISO-8859-1')
 lines = f.readlines()
